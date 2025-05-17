@@ -62,7 +62,7 @@ Then:
 - npm run android – to run on Android
 
 
-###💡 Use Expo if the project is set up with it.
+### 💡 Use Expo if the project is set up with it.
 
 
 ### 🙌 Contributing
