@@ -49,23 +49,23 @@ Includes conversion between:
 - cd calculator-app
 
 
-2. Install Dependencies
+### 2. Install Dependencies
 
 - npm install
   
-3. Start the App
+### 3. Start the App
 
 - npm start
   
 Then:
 
-npm run android – to run on Android
+- npm run android – to run on Android
 
 
-💡 Use Expo if the project is set up with it.
+###💡 Use Expo if the project is set up with it.
 
 
-🙌 Contributing
+### 🙌 Contributing
 Want to improve or fix something? Pull requests are welcome!
 
 
