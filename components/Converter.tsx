@@ -28,8 +28,12 @@ type ConverterType =
   | 'Volume'
   | 'Data'
   | 'Power'
+  | 'GST'
   | 'Weight Price'
   | 'Travel Cost'
+  | 'Finance'
+  | 'Marks Percentage'
+  | 'Academic'
   | null;
 
 export default function Converter() {
@@ -42,6 +46,14 @@ export default function Converter() {
   const [currentMonth, setCurrentMonth] = useState((new Date().getMonth() + 1).toString());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear().toString());
   const [thirdInput, setThirdInput] = useState('');
+  const [selectedGST, setSelectedGST] = useState<number | null>(null);
+  const [principal, setPrincipal] = useState('');
+  const [rate, setRate] = useState('');
+  const [duration, setDuration] = useState('');
+  const [durationType, setDurationType] = useState<'Year' | 'Month'>('Year');
+
+  
+
   
 
   useFocusEffect(
@@ -73,6 +85,8 @@ export default function Converter() {
     Volume: ['Milliliter', 'Liter', 'Cubic Centimeter', 'Cubic Meter', 'Teaspoon', 'Tablespoon', 'Cup', 'Pint', 'Quart', 'Gallon'],
     Data: ['Byte', 'KB', 'MB', 'GB', 'TB'],
     Power: ['Watt', 'Kilowatt', 'Megawatt', 'Horsepower', 'BTU/hour', 'Calorie/second', 'Erg/second',],
+    Academic: ['Percentage', 'CGPA', 'GPA'],
+
   };
 
   const icons: Record<Exclude<ConverterType, null>, string> = {
@@ -91,6 +105,11 @@ export default function Converter() {
     Power: 'flash',
     'Travel Cost': 'car',
     'Weight Price': 'currency-inr',
+    GST: 'briefcase',
+    Finance : 'finance',
+    'Marks Percentage' : 'percent',
+    Academic: 'school',
+    
   };
 
   
@@ -100,11 +119,42 @@ export default function Converter() {
     const secondValue = parseFloat(extraInput);
     if (isNaN(value)) return '';
 
-    if (selectedConverter && ['BMI', 'Discount'].includes(selectedConverter)) {
+    if (selectedConverter && ['BMI', 'Discount', 'Marks Percentage'].includes(selectedConverter)) {
       if (isNaN(secondValue)) return '';
     }
+    
 
     switch (selectedConverter) {
+
+
+      case 'Academic': {
+          const value = parseFloat(input);
+          if (isNaN(value)) return '';
+
+                  if (unitFrom === 'Percentage' && unitTo === 'CGPA') {
+              return (value / 9.5).toFixed(2); // Common 10-scale logic
+          } else if (unitFrom === 'CGPA' && unitTo === 'Percentage') {
+              return (value * 9.5).toFixed(2);
+          } else if (unitFrom === 'Percentage' && unitTo === 'GPA') {
+              return (value / 25).toFixed(2); // Example: 100% = 4.0 GPA
+          } else if (unitFrom === 'GPA' && unitTo === 'Percentage') {
+              return (value * 25).toFixed(2);
+          } else {
+              return '';
+          }
+
+          
+        }
+
+
+        case 'Marks Percentage': {
+        const obtained = parseFloat(input);
+        const total = parseFloat(extraInput);
+        if (isNaN(obtained) || isNaN(total) || total === 0) return '';
+        const percentage = (obtained / total) * 100;
+        return percentage.toFixed(2);  // Return percentage with 2 decimal places
+      }
+
       
       case 'Temperature':
         return unitFrom === 'Celsius'
@@ -207,9 +257,9 @@ export default function Converter() {
         'Mach': 343, // Approx at sea level at 20°C
       };
 
-  const fromInMetersPerSec = value * speedRates[unitFrom];
-  const speedResult = fromInMetersPerSec / speedRates[unitTo];
-  return speedResult.toFixed(4);
+        const fromInMetersPerSec = value * speedRates[unitFrom];
+        const speedResult = fromInMetersPerSec / speedRates[unitTo];
+        return speedResult.toFixed(4);
 
       case 'Area':
         const areaRates: Record<string, number> = {
@@ -270,6 +320,13 @@ export default function Converter() {
         const cost = (distance / mileage) * fuelPrice;
         return cost.toFixed(2);
 
+
+        case 'GST':
+          const gst = parseFloat(unitFrom); // e.g., "5"
+          if (isNaN(gst)) return '';
+          return (value + (value * gst) / 100).toFixed(2);
+
+
         case 'Power':
           const powerRates: Record<string, number> = {
             'Watt': 1,
@@ -281,16 +338,42 @@ export default function Converter() {
             'Erg/second': 1e-7,
           };
 
-  const fromInWatts = value * powerRates[unitFrom];
-  const powerResult = fromInWatts / powerRates[unitTo];
-  return powerResult.toFixed(4);
+          
 
-  const fromInBytes = value * dataRates[unitFrom];
-  const dataResult = fromInBytes / dataRates[unitTo];
-  return dataResult.toFixed(4);
+          const fromInWatts = value * powerRates[unitFrom];
+          const powerResult = fromInWatts / powerRates[unitTo];
+          return powerResult.toFixed(4);
 
-      case 'Weight Price':
-        return (value * secondValue).toFixed(2);
+          const fromInBytes = value * dataRates[unitFrom];
+          const dataResult = fromInBytes / dataRates[unitTo];
+          return dataResult.toFixed(4);
+
+        case 'Weight Price':
+          return (value * secondValue).toFixed(2);
+
+
+
+       case 'Finance': {
+          const P = parseFloat(principal);
+          const R = parseFloat(rate);
+          const D = parseFloat(duration);
+          if (isNaN(P) || isNaN(R) || isNaN(D)) return '';
+
+          const n = durationType === 'Year' ? D * 12 : D; // Total months
+          const r = R / 12 / 100; // Monthly interest rate
+
+          const emi = (P * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+          const totalPayment = emi * n;
+          const totalInterest = totalPayment - P;
+
+          return (
+            `EMI: ₹${emi.toFixed(2)}\n` +
+            `Total Payment: ₹${totalPayment.toFixed(2)}\n` +
+            `Total Interest: ₹${totalInterest.toFixed(2)}`
+          );
+        }
+
+
 
       default:
         return '';
@@ -363,6 +446,81 @@ export default function Converter() {
       </>
     )}
 
+
+
+
+
+
+    {selectedConverter === 'Finance' && (
+  <>
+    <TextInput
+      style={styles.input}
+      placeholder="Principal Amount"
+      keyboardType="numeric"
+      value={principal}
+      onChangeText={setPrincipal}
+    />
+
+    <TextInput
+      style={styles.input}
+      placeholder="Interest Rate (%) per annum"
+      keyboardType="numeric"
+      value={rate}
+      onChangeText={setRate}
+    />
+
+    <TextInput
+      style={styles.input}
+      placeholder={`Duration in ${durationType}s`}
+      keyboardType="numeric"
+      value={duration}
+      onChangeText={setDuration}
+    />
+
+    <View style={styles.row}>
+      <TouchableOpacity
+        style={[
+          styles.durationButton,
+          durationType === 'Year' && styles.selectedDurationButton,
+        ]}
+        onPress={() => setDurationType('Year')}
+      >
+        <Text style={styles.durationText}>Years</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[
+          styles.durationButton,
+          durationType === 'Month' && styles.selectedDurationButton,
+        ]}
+        onPress={() => setDurationType('Month')}
+      >
+        <Text style={styles.durationText}>Months</Text>
+      </TouchableOpacity>
+    </View>
+  </>
+)}
+
+    
+    {selectedConverter === 'Marks Percentage' && (
+      <>
+     <TextInput
+        style={styles.input}
+        value={input}
+        onChangeText={setInput}
+        placeholder="Obtained Marks"
+      />
+      <TextInput
+        style={styles.input}
+        value={extraInput}
+        onChangeText={setExtraInput}
+        placeholder="Total Marks"
+      />
+      </>
+    )}
+
+
+
     {selectedConverter === 'Travel Cost' && (
   <>
     <TextInput
@@ -387,6 +545,33 @@ export default function Converter() {
       onChangeText={setThirdInput}
     />
   </>
+)}
+
+
+
+
+{selectedConverter === 'GST' ? (
+  <View style={styles.gstButtonsContainer}>
+    {[3, 5, 12, 18, 28].map((rate) => (
+      <TouchableOpacity
+        key={rate}
+        style={[
+          styles.gstButton,
+          selectedGST === rate && styles.gstButtonSelected,
+        ]}
+        onPress={() => {
+          setUnitFrom(`${rate}`);
+          setSelectedGST(rate);
+        }}
+      >
+        <Text style={styles.gstButtonText}>{rate}%</Text>
+      </TouchableOpacity>
+    ))}
+  </View>
+) : (
+  <View style={styles.row}>
+    {/* Pickers here */}
+  </View>
 )}
 
     {units[selectedConverter!] && (
@@ -416,6 +601,9 @@ export default function Converter() {
 );
 
 
+    
+
+
   const renderMainMenu = () => (
     <View style={styles.menuContainer}>
       <Text style={styles.title}>Universal Converter</Text>
@@ -434,8 +622,12 @@ export default function Converter() {
           'Volume',
           'Data',
           'Power',
+          'GST',
           'Weight Price',
           'Travel Cost',
+          'Finance',
+          'Marks Percentage',
+          'Academic',
         ] as ConverterType[]
       ).map((type) => (
         <TouchableOpacity
@@ -542,4 +734,42 @@ const styles = StyleSheet.create({
     marginTop: 20,
     color: '#333',
   },
+
+  gstButtonsContainer: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  justifyContent: 'center',
+  gap: 10,
+},
+
+gstButton: {
+  backgroundColor: '#007AFF',
+  paddingVertical: 10,
+  paddingHorizontal: 16,
+  borderRadius: 8,
+},
+
+gstButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: '600',
+},
+gstButtonSelected: {
+  backgroundColor: '#d68200',
+  transform: [{ scale: 1.05 }],
+},
+durationButton: {
+  backgroundColor: '#ddd',
+  padding: 10,
+  borderRadius: 8,
+  width: '45%',
+  alignItems: 'center',
+},
+selectedDurationButton: {
+  backgroundColor: '#007AFF',
+},
+durationText: {
+  color: '#000',
+  fontWeight: '600',
+},
 });
